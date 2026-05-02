@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Стрілялка</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+        color: white;
+        font-family: Arial;
+    }
+    canvas {
+        display: block;
+        margin: auto;
+        background: #111;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = 800;
+canvas.height = 600;
+
+let keys = {};
+let bullets = [];
+let enemies = [];
+let score = 0;
+
+// Гравець
+let player = {
+    x: 370,
+    y: 520,
+    width: 60,
+    height: 20,
+    speed: 6
+};
+
+// Керування
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+// Стрільба
+function shoot() {
+    bullets.push({
+        x: player.x + player.width / 2 - 3,
+        y: player.y,
+        width: 6,
+        height: 10,
+        speed: 8
+    });
+}
+
+// Створення ворогів
+function spawnEnemy() {
+    enemies.push({
+        x: Math.random() * (canvas.width - 40),
+        y: 0,
+        width: 40,
+        height: 40,
+        speed: 2 + Math.random() * 2
+    });
+}
+
+setInterval(spawnEnemy, 1000);
+
+// Оновлення гри
+function update() {
+
+    // Рух
+    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+    if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+    if (keys["Space"]) shoot();
+
+    // Кулі
+    bullets.forEach((b, i) => {
+        b.y -= b.speed;
+        if (b.y < 0) bullets.splice(i, 1);
+    });
+
+    // Вороги
+    enemies.forEach((e, ei) => {
+        e.y += e.speed;
+
+        if (e.y > canvas.height) enemies.splice(ei, 1);
+
+        // Перевірка попадання
+        bullets.forEach((b, bi) => {
+            if (
+                b.x < e.x + e.width &&
+                b.x + b.width > e.x &&
+                b.y < e.y + e.height &&
+                b.y + b.height > e.y
+            ) {
+                enemies.splice(ei, 1);
+                bullets.splice(bi, 1);
+                score++;
+            }
+        });
+    });
+}
+
+// Малювання
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Гравець
+    ctx.fillStyle = "lime";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Кулі
+    ctx.fillStyle = "yellow";
+    bullets.forEach(b => {
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+    });
+
+    // Вороги
+    ctx.fillStyle = "red";
+    enemies.forEach(e => {
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+    });
+
+    // Очки
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 25);
+}
+
+// Ігровий цикл
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
